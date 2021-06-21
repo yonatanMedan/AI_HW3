@@ -152,51 +152,11 @@ def train_with_cross_validation(data,model):
     return results
 
 
-id3 = ID3()
 
-df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
-
-data = df.to_numpy()
-
-train_with_cross_validation(data,ID3)
-
-tree = id3.fit(df.to_numpy())
-
-id3.predict_row(tree,df.to_numpy()[200])
-
-(id3.predict(tree,df.to_numpy()[:,1:])==df.to_numpy()[:,0]).all()
-
-
-id3.fit_predict(df.to_numpy(),df.to_numpy()[:,1:])==get_targets_as_ints(df.to_numpy()[:,0])
-
-
-
-(df.to_numpy()[:,0]==df.to_numpy()[0,0]).all()
-
-node = Node(df.to_numpy())
-
-node.num_exampels()
-
-id3.is_pure_node(node)
-
-node_left,node_right = id3.split_by_feature(node,1,12)
-
-node_left.calc_entropy()
-
-node_right.data[:10,0]
-
-df.iloc[:,1:].to_numpy()[0][df.iloc[:,1:].to_numpy()[0]>100]
-
-data_num = df.iloc[:,1:].to_numpy()
-
-len(data_num)
-
-(2250+2499)/2
-
-np.sort(data_num[:,3])
-
-id3.get_intermediate_values(data_num,3)
-
-np.roll(data_num[:,3],1)
-
-
+if __name__=="__main__":
+    id3 = ID3()
+    df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
+    data = df.to_numpy()
+    results = train_with_cross_validation(data,ID3)
+    average_accuracy = np.array(results).mean()
+    print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
