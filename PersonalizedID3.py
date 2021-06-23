@@ -5,7 +5,7 @@ import numpy as np
 
 class PersonalizedID3(ID3):
     def is_pure_node(self,node):        
-        return super().is_pure_node(node) or node.num_m()/node.num_exampels()>0.92
+        return super().is_pure_node(node) or node.num_m()/node.num_exampels()>8/9
 
 
 if __name__=="__main__":
