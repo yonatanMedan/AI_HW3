@@ -35,8 +35,6 @@ class Node:
 
 
 
-math.log2(8)
-
 
 def get_targets_as_ints(labels):
     return (labels=="M").astype(int)
@@ -136,7 +134,8 @@ class ID3:
 
 def train_with_cross_validation(data,model):
     kf = KFold(n_splits=5, shuffle=True,random_state=302957113)
-    results = []
+    acc_results = []
+    loss_results = []
     for train_index, test_index in kf.split(data):
         id3 = model()
         train = data[train_index]
@@ -147,16 +146,38 @@ def train_with_cross_validation(data,model):
         num_correct = len(predictions[predictions==get_targets_as_ints(test_labels)])
         num_total = len(test)
         accuracy = num_correct/num_total
-        results.append(accuracy)
+        acc_results.append(accuracy)
+        loss = spacial_loss(predictions,get_targets_as_ints(test_labels))
+        loss_results.append(loss)
         
-    return results
+    return acc_results,loss_results
 
+# predicting M=1 where labels is B=0
+def count_false_positive(predictions,labels):
+    mask = (labels==0)&(predictions==1)
+    return len(predictions[mask])
+# predicting B=0 where labels is M=1
+def count_false_negative(predictions,labels):
+    mask = (labels==1)&(predictions==0)
+    return len(predictions[mask])
+# Expecting predictions and labels to be ints (1=M 0=B)
+def spacial_loss(predictions, labels):
+    return count_false_positive(predictions,labels)+8*count_false_negative(predictions,labels)
+
+
+def calc_spacial_loss_on_all_M_prediciton(data):
+    labels = get_targets_as_ints(data[:,LABEL_COL])
+    predictions = np.ones(len(labels))
+    return spacial_loss(predictions,labels)
 
 
 if __name__=="__main__":
     id3 = ID3()
     df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
     data = df.to_numpy()
-    results = train_with_cross_validation(data,ID3)
+    results,losses = train_with_cross_validation(data,ID3)
     average_accuracy = np.array(results).mean()
+    average_spacial_loss = np.array(losses).mean()
     print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
+    print("Trained ID3 with 5Fold Cross validation average spacial loss of {}".format(average_spacial_loss))
+
