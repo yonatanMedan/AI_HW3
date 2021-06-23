@@ -14,6 +14,10 @@ class Node:
     
     def num_exampels(self):
         return len(self.data)
+    
+    def num_m(self):
+        target = self.data[:,0]
+        return len(target[target=="M"])
 
     def add_child(self,child):
         self.children.append(child)
@@ -180,4 +184,7 @@ if __name__=="__main__":
     average_spacial_loss = np.array(losses).mean()
     print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
     print("Trained ID3 with 5Fold Cross validation average spacial loss of {}".format(average_spacial_loss))
+    print("ALL M naive classifier spacial loss: {}".format(calc_spacial_loss_on_all_M_prediciton(data)))
+
+
 
