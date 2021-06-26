@@ -30,8 +30,8 @@ class Node:
             entropy-= class_prob*class_prob_log
         return entropy
         
-    def __str__():
-        return self.value if value is not None else self.children
+    def __str__(self):
+        return self.value if self.value is not None else self.children
 
 
 
@@ -44,6 +44,10 @@ def get_targets_as_ints(labels):
 
 # +
 class ID3:
+    def __init__(self,data_size=-1,par=-1):
+        self.data_size = data_size
+        self.par = par
+
     def fit_predict(self,data,test_data):
         tree = self.fit(data)
         return get_targets_as_ints(self.predict(tree, test_data))
@@ -53,11 +57,19 @@ class ID3:
         self.grow(tree)
         return tree
 
+    def get_pruned_val(self, data:np.ndarray):
+        unique, counts = np.unique(data, return_counts=True)
+        max_index = np.argmax(counts)
+        return unique[max_index]
+
     def grow(self,node:Node):
         if self.is_pure_node(node):
             node.value = node.data[0,LABEL_COL]
-            return 
-
+            return
+        if self.is_small_node(node):
+            pruned_data = node.data[:,LABEL_COL]
+            node.value = self.get_pruned_val(pruned_data)
+            return
         feature_index,val = self.choose_feature(node)
         node.feature = feature_index
         node.feature_criterion = val
@@ -129,16 +141,25 @@ class ID3:
     def is_pure_node(self,node):
         target = node.data[:,0]
         return (target==target[0]).all()
-        
+
+    def is_small_node(self,node:Node):
+        if self.par<0 or self.par > 100:
+            return False
+        num_row, num_col = node.data.shape
+        min_node_num = self.data_size * self.par / 100
+        if num_row >= min_node_num:
+            return False
+        return True
         
         
 # -
 
-def train_with_cross_validation(data,model):
+def train_with_cross_validation(data,model,par=-1):
     kf = KFold(n_splits=5, shuffle=True,random_state=302957113)
     results = []
     for train_index, test_index in kf.split(data):
-        id3 = model()
+        num_row, num_col = data.shape
+        id3 = model(num_row,par)
         train = data[train_index]
         test = data[test_index]
         test_x = test[:,1:]
@@ -157,6 +178,7 @@ if __name__=="__main__":
     id3 = ID3()
     df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
     data = df.to_numpy()
-    results = train_with_cross_validation(data,ID3)
-    average_accuracy = np.array(results).mean()
-    print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
+    for i in range(0,100,20):
+        results = train_with_cross_validation(data,ID3,i)
+        average_accuracy = np.array(results).mean()
+        print("Trained ID3 with 5Fold Cross validation and par = {} average accuracy of {}".format(str(i),average_accuracy))
