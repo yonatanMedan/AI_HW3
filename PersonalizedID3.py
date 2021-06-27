@@ -69,7 +69,7 @@ class PersonalizedID3(ID3):
             Y = data[:,[LABEL_COL]]
         else:
             X = data
-#         X = self.add2MeansFeature(X)
+        X = self.add2MeansFeature(X)
         X = self.addPCAFeatures(X)
 #         X = self.select_features(X)
         
