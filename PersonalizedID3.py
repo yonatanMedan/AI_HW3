@@ -1,5 +1,5 @@
 import pandas as pd
-from ID3 import ID3,train_with_cross_validation,LABEL_COL
+from ID3 import ID3,train_with_cross_validation,LABEL_COL,KFold,get_targets_as_ints,spacial_loss
 import numpy as np
 import time
 from sklearn.preprocessing import StandardScaler
@@ -8,7 +8,11 @@ from sklearn.cluster import KMeans
 
 
 class PersonalizedID3(ID3):
-    def __init__(self,data_size=300,par=4.2):
+    def __init__(self,data_size=301,par=4.2):
+        if data_size is None:
+            data_size=301
+        if par is None:
+            par = 4.2
         super().__init__(data_size,par)
         self.pca_transformer=None
         self.standard_scaler_transformer_pca = None
@@ -87,13 +91,35 @@ class PersonalizedID3(ID3):
         return super().is_pure_node(node) or  node.num_m()/node.num_exampels()>8/9
 
 
+def train_with_cross_validation(data,model,data_size=None,par=None):
+    kf = KFold(n_splits=5, shuffle=True,random_state=302957113)
+    acc_results = []
+    loss_results = []
+    for train_index, test_index in kf.split(data):
+        num_row, num_col = data.shape
+        id3 = model(data_size,par)
+        train = data[train_index]
+        test = data[test_index]
+        test_x = test[:,1:]
+        test_labels = test[:,LABEL_COL]
+        predictions = id3.fit_predict(train,test_x)
+        num_correct = len(predictions[predictions==get_targets_as_ints(test_labels)])
+        num_total = len(test)
+        accuracy = num_correct/num_total
+        acc_results.append(accuracy)
+        loss = spacial_loss(predictions,get_targets_as_ints(test_labels))
+        loss_results.append(loss)
+        
+    return acc_results,loss_results
+
+
 
 if __name__=="__main__":
     start = time.time()
     df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
 #     df = pd.concat([df,principalDf],axis=1)
     data = df.to_numpy()
-    results,losses = train_with_cross_validation(data,PersonalizedID3,4.2)
+    results,losses = train_with_cross_validation(data,PersonalizedID3)
     average_accuracy = np.array(results).mean()
     average_spacial_loss = np.array(losses).mean()
     print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
