@@ -71,7 +71,7 @@ class PersonalizedID3(ID3):
             X = data
 #         X = self.add2MeansFeature(X)
         X = self.addPCAFeatures(X)
-        X = self.select_features(X)
+#         X = self.select_features(X)
         
         if train==True:
             data = np.concatenate([Y,X],axis=1)
@@ -119,7 +119,7 @@ if __name__=="__main__":
     df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
 #     df = pd.concat([df,principalDf],axis=1)
     data = df.to_numpy()
-    results,losses = train_with_cross_validation(data,PersonalizedID3)
+    results,losses = train_with_cross_validation(data,PersonalizedID3,301,4.2)
     average_accuracy = np.array(results).mean()
     average_spacial_loss = np.array(losses).mean()
     print("Trained ID3 with 5Fold Cross validation average accuracy of {}".format(average_accuracy))
@@ -130,31 +130,31 @@ if __name__=="__main__":
 
 # +
 
-# X= df.iloc[:,1:]
-# # Standardizing the features
-# X = StandardScaler().fit_transform(X)
-# pca = PCA(n_components=2)
-# principalComponents = pca.fit_transform(X)
-# principalDf = pd.DataFrame(data = principalComponents
-#              , columns = ['principal component 1', 'principal component 2'])
-# finalDf = pd.concat([principalDf, df[['Y']]], axis = 1)
+X= df.iloc[:,1:]
+# Standardizing the features
+X = StandardScaler().fit_transform(X)
+pca = PCA(n_components=2)
+principalComponents = pca.fit_transform(X)
+principalDf = pd.DataFrame(data = principalComponents
+             , columns = ['principal component 1', 'principal component 2'])
+finalDf = pd.concat([principalDf, df[['Y']]], axis = 1)
 
 
-# fig = plt.figure(figsize = (8,8))
-# ax = fig.add_subplot(1,1,1) 
-# ax.set_xlabel('Principal Component 1', fontsize = 15)
-# ax.set_ylabel('Principal Component 2', fontsize = 15)
-# ax.set_title('2 component PCA', fontsize = 20)
-# targets = ['M', 'B']
-# colors = ['r', 'g']
-# for target, color in zip(targets,colors):
-#     indicesToKeep = finalDf['Y'] == target
-#     ax.scatter(finalDf.loc[indicesToKeep, 'principal component 1']
-#                , finalDf.loc[indicesToKeep, 'principal component 2']
-#                , c = color
-#                , s = 50)
-# ax.legend(targets)
-# ax.grid()
+fig = plt.figure(figsize = (8,8))
+ax = fig.add_subplot(1,1,1) 
+ax.set_xlabel('Principal Component 1', fontsize = 15)
+ax.set_ylabel('Principal Component 2', fontsize = 15)
+ax.set_title('2 component PCA', fontsize = 20)
+targets = ['M', 'B']
+colors = ['r', 'g']
+for target, color in zip(targets,colors):
+    indicesToKeep = finalDf['Y'] == target
+    ax.scatter(finalDf.loc[indicesToKeep, 'principal component 1']
+               , finalDf.loc[indicesToKeep, 'principal component 2']
+               , c = color
+               , s = 50)
+ax.legend(targets)
+ax.grid()
 # -
 
 
