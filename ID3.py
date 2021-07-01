@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import math
 from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+
+
 LABEL_COL = 0
 class Node:
     def __init__(self, data:np.ndarray):
@@ -192,17 +195,35 @@ def calc_spacial_loss_on_all_M_prediciton(data):
     return spacial_loss(predictions,labels)
 
 
-if __name__=="__main__":
-    id3 = ID3()
-    df = pd.read_csv("train.csv",names = ["Y"]+["x_{i}".format(i=i) for i in range(30)])
+def experiment():
+    print("we will use an uninformed pruning method")
+    print("the method will trim nodes that contains less then x% of the total data lengh")
+    print("the variable x will be changed to test the effect of pruning on the average accuracy we get from the 5Fold Cross validation")
+    df = pd.read_csv("train.csv", names=["Y"] + ["x_{i}".format(i=i) for i in range(30)])
     data = df.to_numpy()
-    for i in range(0,100,1):
-        results, losses = train_with_cross_validation(data, ID3,i)
+    results, losses = train_with_cross_validation(data, ID3)
+    average_accuracy = np.array(results).mean()
+    x_val = [0]
+    y_val = [average_accuracy]
+    for i in range(3, 100, 22):
+        results, losses = train_with_cross_validation(data, ID3, i)
         average_accuracy = np.array(results).mean()
-        average_spacial_loss = np.array(losses).mean()
-        print("Trained ID3 with 5Fold Cross validation and par = {} average accuracy of {}".format(str(i),average_accuracy))
-        print("Trained ID3 with 5Fold Cross validation average spacial loss of {}".format(average_spacial_loss))
-        print("ALL M naive classifier spacial loss: {}".format(calc_spacial_loss_on_all_M_prediciton(data)))
+        x_val.append(i)
+        y_val.append(average_accuracy)
+        print("Trained ID3 with 5Fold Cross validation while using node trimming ratio of {}% of total data lengh, got average accuracy of {}".format(str(i),average_accuracy))
+    results, losses = train_with_cross_validation(data, ID3, 100)
+    average_accuracy = np.array(results).mean()
+    x_val.append(100)
+    y_val.append(average_accuracy)
+
+    plt.plot(x_val,y_val)
+
+    plt.xlabel("node trimming ratio out of total data lengh")
+    plt.ylabel("average accuracy of 5Fold Cross validation")
+
+    plt.title("average accuracy per trimming ratio")
+
+    plt.show()
 
 
-
+#experiment()
